@@ -13,10 +13,10 @@ jobs:
       - name: Install Dependencies
         run: pip install -r mlops/requirements.txt
 
-      - name: 🔍 Debug script content
+      - name: Debug script content
         run: cat mlops/model_building/data_register.py
 
-      - name: 📂 List directories
+      - name: List directories
         run: |
           pwd
           ls -l
