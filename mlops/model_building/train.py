@@ -17,10 +17,10 @@ from huggingface_hub.utils import RepositoryNotFoundError, HfHubHTTPError
 
 api = HfApi()
 
-Xtrain_path = "hf://datasets/harasar/bank-customer-churn/Xtrain.csv"
-Xtest_path = "hf://datasets/harasar/bank-customer-churn/Xtest.csv"
-ytrain_path = "hf://datasets/harasar/bank-customer-churn/ytrain.csv"
-ytest_path = "hf://datasets/harasar/bank-customer-churn/ytest.csv"
+Xtrain_path = "hf://datasets/harasar/Bank-Customer-Churn/Xtrain.csv"
+Xtest_path = "hf://datasets/harasar/Bank-Customer-Churn/Xtest.csv"
+ytrain_path = "hf://datasets/harasar/Bank-Customer-Churn/ytrain.csv"
+ytest_path = "hf://datasets/harasar/Bank-Customer-Churn/ytest.csv"
 
 Xtrain = pd.read_csv(Xtrain_path)
 Xtest = pd.read_csv(Xtest_path)
@@ -105,7 +105,7 @@ print(classification_report(ytest, y_pred_test))
 joblib.dump(best_model, "best_churn_model.joblib")
 
 # Upload to Hugging Face
-repo_id = "harasar/churn-model"
+repo_id = "harasar/Bank-Customer-Churn"
 repo_type = "model"
 
 api = HfApi(token=os.getenv("HF_TOKEN"))
