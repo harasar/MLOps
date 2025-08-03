@@ -19,6 +19,8 @@ if not data_path.is_dir():
     exit(1)
 
 # List files inside data folder
+print(f"[INFO] Current working directory: {cwd}")
+print(f"[INFO] Looking for dataset in: {data_path}")
 print("[INFO] Files to upload:", os.listdir(data_path))
 
 # Upload
