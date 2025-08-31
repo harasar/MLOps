@@ -35,34 +35,31 @@ ytest = pd.read_csv(ytest_path)
 
 # List of numerical features in the dataset
 numeric_features = [
-    'Age',               # Customer's age
-    'CityTier',            # Number of years the customer has been with the bank
-    'DurationOfPitch',           # Customer’s account balance
-    'NumberOfPersonVisiting',     # Number of products the customer has with the bank
-    'NumberOfFollowups',         # Whether the customer has a credit card (binary: 0 or 1)
-    'PreferredPropertyStar',    # Whether the customer is an active member (binary: 0 or 1)
-    'NumberOfTrips',            # Customer’s estimated salary
+    'Age',
+    'CityTier',
+    'DurationOfPitch',
+    'NumberOfPersonVisiting',
+    'NumberOfFollowups',
+    'PreferredPropertyStar',
+    'NumberOfTrips',
     'Passport',
     'PitchSatisfactionScore',
     'OwnCar',
     'NumberOfChildrenVisiting',
     'MonthlyIncome',
-
-
 ]
 
 # List of categorical features in the dataset
 categorical_features = [
-    'TypeofContact', 
+    'TypeofContact',
     'Occupation',
-    'Gender', 
-    'ProductPitched',  
-    'MaritalStatus', 
-    'Designation' ,  
+    'Gender',
+    'ProductPitched',
+    'MaritalStatus',
+    'Designation',
 ]
 
-
-# Set the clas weight to handle class imbalance
+# Set the class weight to handle class imbalance
 class_weight = ytrain.value_counts()[0] / ytrain.value_counts()[1]
 class_weight
 
@@ -77,19 +74,19 @@ xgb_model = xgb.XGBClassifier(scale_pos_weight=class_weight, random_state=42)
 
 # Define hyperparameter grid
 param_grid = {
-    'xgbclassifier__n_estimators': [50, 75, 100, 125, 150],    # number of tree to build
-    'xgbclassifier__max_depth': [2, 3, 4],    # maximum depth of each tree
-    'xgbclassifier__colsample_bytree': [0.4, 0.5, 0.6],    # percentage of attributes to be considered (randomly) for each tree
-    'xgbclassifier__colsample_bylevel': [0.4, 0.5, 0.6],    # percentage of attributes to be considered (randomly) for each level of a tree
-    'xgbclassifier__learning_rate': [0.01, 0.05, 0.1],    # learning rate
-    'xgbclassifier__reg_lambda': [0.4, 0.5, 0.6],    # L2 regularization factor
+    'xgbclassifier__n_estimators': [50, 75, 100, 125, 150],
+    'xgbclassifier__max_depth': [2, 3, 4],
+    'xgbclassifier__colsample_bytree': [0.4, 0.5, 0.6],
+    'xgbclassifier__colsample_bylevel': [0.4, 0.5, 0.6],
+    'xgbclassifier__learning_rate': [0.01, 0.05, 0.1],
+    'xgbclassifier__reg_lambda': [0.4, 0.5, 0.6],
 }
 
 # Model pipeline
 model_pipeline = make_pipeline(preprocessor, xgb_model)
 
 # Start MLflow run
-with mlflow.start_run(nested=True):
+with mlflow.start_run():
     # Hyperparameter tuning
     grid_search = GridSearchCV(model_pipeline, param_grid, cv=5, n_jobs=-1)
     grid_search.fit(Xtrain, ytrain)
@@ -136,8 +133,7 @@ with mlflow.start_run(nested=True):
         "test_f1-score": test_report['1']['f1-score']
     })
 
-
-     # -------------------------
+    # -------------------------
     # Random Forest Hyperparameter Tuning
     # -------------------------
     from sklearn.ensemble import RandomForestClassifier
@@ -162,48 +158,46 @@ with mlflow.start_run(nested=True):
     )
     rf_grid.fit(Xtrain, ytrain)
 
-# Log all parameter combinations and their mean test scores
-rf_results = rf_grid.cv_results_
-for i in range(len(rf_results['params'])):
-    rf_param_set = rf_results['params'][i]
-    rf_mean_score = rf_results['mean_test_score'][i]
-    rf_std_score = rf_results['std_test_score'][i]
+    # Log all parameter combinations and their mean test scores
+    rf_results = rf_grid.cv_results_
+    for i in range(len(rf_results['params'])):
+        rf_param_set = rf_results['params'][i]
+        rf_mean_score = rf_results['mean_test_score'][i]
+        rf_std_score = rf_results['std_test_score'][i]
 
-    # Log each combination as a separate MLflow run (nested)
-    with mlflow.start_run(nested=True):
-        mlflow.log_params(rf_param_set)
-        mlflow.log_metric("rf_mean_test_score", rf_mean_score)
-        mlflow.log_metric("rf_std_test_score", rf_std_score)
+        # Log each combination as a separate MLflow run (nested)
+        with mlflow.start_run(nested=True):
+            mlflow.log_params(rf_param_set)
+            mlflow.log_metric("rf_mean_test_score", rf_mean_score)
+            mlflow.log_metric("rf_std_test_score", rf_std_score)
 
-# Log best parameters separately in main run
-mlflow.log_params(rf_grid.best_params_)
+    # Log best parameters separately in main run
+    mlflow.log_params(rf_grid.best_params_)
 
-rf_best = rf_grid.best_estimator_
-rf_pred_train = rf_best.predict(Xtrain)
-rf_pred_test = rf_best.predict(Xtest)
+    rf_best = rf_grid.best_estimator_
+    rf_pred_train = rf_best.predict(Xtrain)
+    rf_pred_test = rf_best.predict(Xtest)
 
-rf_train_report = classification_report(ytrain, rf_pred_train, output_dict=True)
-rf_test_report = classification_report(ytest, rf_pred_test, output_dict=True)
+    rf_train_report = classification_report(ytrain, rf_pred_train, output_dict=True)
+    rf_test_report = classification_report(ytest, rf_pred_test, output_dict=True)
 
-print("===== Random Forest Results =====")
-print("Best Params:", rf_grid.best_params_)
-print("Train Accuracy:", rf_train_report['accuracy'])
-print("Test Accuracy:", rf_test_report['accuracy'])
+    print("===== Random Forest Results =====")
+    print("Best Params:", rf_grid.best_params_)
+    print("Train Accuracy:", rf_train_report['accuracy'])
+    print("Test Accuracy:", rf_test_report['accuracy'])
 
-mlflow.log_metrics({
-    "rf_train_accuracy": rf_train_report['accuracy'],
-    "rf_train_precision": rf_train_report['1']['precision'],
-    "rf_train_recall": rf_train_report['1']['recall'],
-    "rf_train_f1-score": rf_train_report['1']['f1-score'],
-    "rf_test_accuracy": rf_test_report['accuracy'],
-    "rf_test_precision": rf_test_report['1']['precision'],
-    "rf_test_recall": rf_test_report['1']['recall'],
-    "rf_test_f1-score": rf_test_report['1']['f1-score']
-})
+    mlflow.log_metrics({
+        "rf_train_accuracy": rf_train_report['accuracy'],
+        "rf_train_precision": rf_train_report['1']['precision'],
+        "rf_train_recall": rf_train_report['1']['recall'],
+        "rf_train_f1-score": rf_train_report['1']['f1-score'],
+        "rf_test_accuracy": rf_test_report['accuracy'],
+        "rf_test_precision": rf_test_report['1']['precision'],
+        "rf_test_recall": rf_test_report['1']['recall'],
+        "rf_test_f1-score": rf_test_report['1']['f1-score']
+    })
 
-    #####################################################################
-
-# -------------------------
+    # -------------------------
     # Compare & Select Best
     # -------------------------
     xgb_acc = test_report['accuracy']
@@ -214,7 +208,6 @@ mlflow.log_metrics({
         best_name = "RandomForest"
         best_acc = rf_acc
     else:
-        # keep the XGBoost best_model from above
         best_name = "XGBoost"
         best_acc = xgb_acc
 
@@ -232,17 +225,12 @@ mlflow.log_metrics({
     mlflow.log_artifact(model_path, artifact_path="model")
     print(f"Model saved as artifact at: {model_path}")
 
-    ############################################################################
-
-    # Log the model artifact
-    mlflow.log_artifact(model_path, artifact_path="model")
-    print(f"Model saved as artifact at: {model_path}")
-
+    # -------------------------
     # Upload to Hugging Face
+    # -------------------------
     repo_id = "harasar/churn-model"
     repo_type = "model"
 
-    # Step 1: Check if the space exists
     try:
         api.repo_info(repo_id=repo_id, repo_type=repo_type)
         print(f"Space '{repo_id}' already exists. Using it.")
@@ -251,9 +239,8 @@ mlflow.log_metrics({
         create_repo(repo_id=repo_id, repo_type=repo_type, private=False)
         print(f"Space '{repo_id}' created.")
 
-    # create_repo("churn-model", repo_type="model", private=False)
     api.upload_file(
-        path_or_fileobj=model_path,             # ✅ use correct variable
+        path_or_fileobj=model_path,
         path_in_repo=os.path.basename(model_path),
         repo_id=repo_id,
         repo_type=repo_type,
