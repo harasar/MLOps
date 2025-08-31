@@ -19,7 +19,7 @@ TypeofContact = st.selectbox("Type of Contact", ["Self Enquiry", "Company Invite
 CityTier = st.selectbox("City Tier", [1, 2, 3])
 DurationOfPitch = st.number_input("Duration of Pitch (minutes)", min_value=0, max_value=60, value=10)
 Occupation = st.selectbox("Occupation", ["Salaried", "Free Lancer", "Small Business", "Large Business"])
-Gender = st.selectbox("Gender", ["Female", "Male", "Fe Male"])
+Gender = st.selectbox("Gender", ["Female", "Male",])
 NumberOfPersonVisiting = st.number_input("Number of Persons Visiting", min_value=1, max_value=10, value=2)
 NumberOfFollowups = st.number_input("Number of Followups", min_value=0, max_value=10, value=2)
 ProductPitched = st.selectbox("Product Pitched", ["Deluxe", "Basic", "Standard", "Super Deluxe", "King"])
