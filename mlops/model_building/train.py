@@ -122,7 +122,7 @@ with mlflow.start_run():
     y_pred_test = (y_pred_test_proba >= classification_threshold).astype(int)
 
     train_report = classification_report(ytrain, y_pred_train, output_dict=True)
-    test_report = classification_report(ytest, y_pred_test, output_dict=n_estimatorsTrue)
+    test_report = classification_report(ytest, y_pred_test, output_dict=True)
 
     # Log the metrics for the best model
     mlflow.log_metrics({
