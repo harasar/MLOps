@@ -20,17 +20,17 @@ target = 'ProdTaken'
 # List of numerical features in the dataset
 numeric_features = [
     'Age',               # Customer's age
-    'CityTier',            # Number of years the customer has been with the bank
-    'DurationOfPitch',           # Customer’s account balance
-    'NumberOfPersonVisiting',     # Number of products the customer has with the bank
-    'NumberOfFollowups',         # Whether the customer has a credit card (binary: 0 or 1)
-    'PreferredPropertyStar',    # Whether the customer is an active member (binary: 0 or 1)
-    'NumberOfTrips',            # Customer’s estimated salary
-    'Passport',
-    'PitchSatisfactionScore',
-    'OwnCar',
-    'NumberOfChildrenVisiting',
-    'MonthlyIncome',
+    'CityTier',           # Tier of the city (1, 2, or 3) 
+    'DurationOfPitch',           # Duration of the pitch in minutes
+    'NumberOfPersonVisiting',     # Number of persons visiting the pitch
+    'NumberOfFollowups',         # Number of follow-ups made
+    'PreferredPropertyStar',    # Customer's preferred property star rating (1 to 5)
+    'NumberOfTrips',            # Number of trips taken by the customer
+    'Passport',                  # Whether the customer has a passport (binary: 0 or 1)
+    'PitchSatisfactionScore',    # Customer's satisfaction score for the pitch (1 to 5)
+    'OwnCar',                    # Whether the customer owns a car (binary: 0 or 1)
+    'NumberOfChildrenVisiting',  # Number of children visiting the pitch
+    'MonthlyIncome',             # Customer's monthly income
 
 
 ]

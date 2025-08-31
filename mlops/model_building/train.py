@@ -122,7 +122,7 @@ with mlflow.start_run():
     y_pred_test = (y_pred_test_proba >= classification_threshold).astype(int)
 
     train_report = classification_report(ytrain, y_pred_train, output_dict=True)
-    test_report = classification_report(ytest, y_pred_test, output_dict=True)
+    test_report = classification_report(ytest, y_pred_test, output_dict=n_estimatorsTrue)
 
     # Log the metrics for the best model
     mlflow.log_metrics({
@@ -136,9 +136,88 @@ with mlflow.start_run():
         "test_f1-score": test_report['1']['f1-score']
     })
 
-    # Save the model locally
-    model_path = "best_churn_model_v1.joblib"
+
+     # -------------------------
+    # Random Forest Hyperparameter Tuning
+    # -------------------------
+    from sklearn.ensemble import RandomForestClassifier
+
+    rf_model = RandomForestClassifier(random_state=42)
+
+rf_param_grid = {
+    "randomforestclassifier__n_estimators": [100, 200],
+    "randomforestclassifier__max_depth": [None, 5, 10],
+    "randomforestclassifier__min_samples_split": [2, 5],
+    "randomforestclassifier__min_samples_leaf": [1, 2]
+}
+
+    rf_pipeline = make_pipeline(preprocessor, rf_model)
+
+    rf_grid = GridSearchCV(
+        rf_pipeline,
+        param_grid=rf_param_grid,
+        cv=5,
+        n_jobs=-1,
+        scoring="accuracy"
+    )
+    rf_grid.fit(Xtrain, ytrain)
+
+    rf_best = rf_grid.best_estimator_
+    rf_pred_train = rf_best.predict(Xtrain)
+    rf_pred_test = rf_best.predict(Xtest)
+
+    rf_train_report = classification_report(ytrain, rf_pred_train, output_dict=True)
+    rf_test_report = classification_report(ytest, rf_pred_test, output_dict=True)
+
+    print("===== Random Forest Results =====")
+    print("Best Params:", rf_grid.best_params_)
+    print("Train Accuracy:", rf_train_report['accuracy'])
+    print("Test Accuracy:", rf_test_report['accuracy'])
+
+    mlflow.log_params(rf_grid.best_params_)
+    mlflow.log_metrics({
+        "rf_train_accuracy": rf_train_report['accuracy'],
+        "rf_train_precision": rf_train_report['1']['precision'],
+        "rf_train_recall": rf_train_report['1']['recall'],
+        "rf_train_f1-score": rf_train_report['1']['f1-score'],
+        "rf_test_accuracy": rf_test_report['accuracy'],
+        "rf_test_precision": rf_test_report['1']['precision'],
+        "rf_test_recall": rf_test_report['1']['recall'],
+        "rf_test_f1-score": rf_test_report['1']['f1-score']
+    })
+
+    #####################################################################
+
+# -------------------------
+    # Compare & Select Best
+    # -------------------------
+    xgb_acc = test_report['accuracy']
+    rf_acc = rf_test_report['accuracy']
+
+    if rf_acc > xgb_acc:
+        best_model = rf_best
+        best_name = "RandomForest"
+        best_acc = rf_acc
+    else:
+        # keep the XGBoost best_model from above
+        best_name = "XGBoost"
+        best_acc = xgb_acc
+
+    print(f"===== Selected Best Model: {best_name} with Accuracy = {best_acc} =====")
+
+    # Save the chosen best model locally
+    model_path = f"best_{best_name}_model_v1.joblib"
     joblib.dump(best_model, model_path)
+
+    # Log which model was chosen
+    mlflow.log_param("best_model", best_name)
+    mlflow.log_metric("best_test_accuracy", best_acc)
+
+    # Log the model artifact
+    mlflow.log_artifact(model_path, artifact_path="model")
+    print(f"Model saved as artifact at: {model_path}")
+
+    ############################################################################
 
     # Log the model artifact
     mlflow.log_artifact(model_path, artifact_path="model")
