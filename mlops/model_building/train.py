@@ -144,12 +144,12 @@ with mlflow.start_run():
 
     rf_model = RandomForestClassifier(random_state=42)
 
-rf_param_grid = {
-    "randomforestclassifier__n_estimators": [100, 200],
-    "randomforestclassifier__max_depth": [None, 5, 10],
-    "randomforestclassifier__min_samples_split": [2, 5],
-    "randomforestclassifier__min_samples_leaf": [1, 2]
-}
+    rf_param_grid = {
+        "randomforestclassifier__n_estimators": [100, 200],
+        "randomforestclassifier__max_depth": [None, 5, 10],
+        "randomforestclassifier__min_samples_split": [2, 5],
+        "randomforestclassifier__min_samples_leaf": [1, 2]
+    }
 
     rf_pipeline = make_pipeline(preprocessor, rf_model)
 
