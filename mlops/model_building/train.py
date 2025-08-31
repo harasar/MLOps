@@ -89,7 +89,7 @@ param_grid = {
 model_pipeline = make_pipeline(preprocessor, xgb_model)
 
 # Start MLflow run
-with mlflow.start_run():
+with mlflow.start_run(nested=True):
     # Hyperparameter tuning
     grid_search = GridSearchCV(model_pipeline, param_grid, cv=5, n_jobs=-1)
     grid_search.fit(Xtrain, ytrain)
@@ -162,29 +162,44 @@ with mlflow.start_run():
     )
     rf_grid.fit(Xtrain, ytrain)
 
-    rf_best = rf_grid.best_estimator_
-    rf_pred_train = rf_best.predict(Xtrain)
-    rf_pred_test = rf_best.predict(Xtest)
+# Log all parameter combinations and their mean test scores
+rf_results = rf_grid.cv_results_
+for i in range(len(rf_results['params'])):
+    rf_param_set = rf_results['params'][i]
+    rf_mean_score = rf_results['mean_test_score'][i]
+    rf_std_score = rf_results['std_test_score'][i]
 
-    rf_train_report = classification_report(ytrain, rf_pred_train, output_dict=True)
-    rf_test_report = classification_report(ytest, rf_pred_test, output_dict=True)
+    # Log each combination as a separate MLflow run (nested)
+    with mlflow.start_run(nested=True):
+        mlflow.log_params(rf_param_set)
+        mlflow.log_metric("rf_mean_test_score", rf_mean_score)
+        mlflow.log_metric("rf_std_test_score", rf_std_score)
 
-    print("===== Random Forest Results =====")
-    print("Best Params:", rf_grid.best_params_)
-    print("Train Accuracy:", rf_train_report['accuracy'])
-    print("Test Accuracy:", rf_test_report['accuracy'])
+# Log best parameters separately in main run
+mlflow.log_params(rf_grid.best_params_)
 
-    mlflow.log_params(rf_grid.best_params_)
-    mlflow.log_metrics({
-        "rf_train_accuracy": rf_train_report['accuracy'],
-        "rf_train_precision": rf_train_report['1']['precision'],
-        "rf_train_recall": rf_train_report['1']['recall'],
-        "rf_train_f1-score": rf_train_report['1']['f1-score'],
-        "rf_test_accuracy": rf_test_report['accuracy'],
-        "rf_test_precision": rf_test_report['1']['precision'],
-        "rf_test_recall": rf_test_report['1']['recall'],
-        "rf_test_f1-score": rf_test_report['1']['f1-score']
-    })
+rf_best = rf_grid.best_estimator_
+rf_pred_train = rf_best.predict(Xtrain)
+rf_pred_test = rf_best.predict(Xtest)
+
+rf_train_report = classification_report(ytrain, rf_pred_train, output_dict=True)
+rf_test_report = classification_report(ytest, rf_pred_test, output_dict=True)
+
+print("===== Random Forest Results =====")
+print("Best Params:", rf_grid.best_params_)
+print("Train Accuracy:", rf_train_report['accuracy'])
+print("Test Accuracy:", rf_test_report['accuracy'])
+
+mlflow.log_metrics({
+    "rf_train_accuracy": rf_train_report['accuracy'],
+    "rf_train_precision": rf_train_report['1']['precision'],
+    "rf_train_recall": rf_train_report['1']['recall'],
+    "rf_train_f1-score": rf_train_report['1']['f1-score'],
+    "rf_test_accuracy": rf_test_report['accuracy'],
+    "rf_test_precision": rf_test_report['1']['precision'],
+    "rf_test_recall": rf_test_report['1']['recall'],
+    "rf_test_f1-score": rf_test_report['1']['f1-score']
+})
 
     #####################################################################
 
@@ -238,8 +253,8 @@ with mlflow.start_run():
 
     # create_repo("churn-model", repo_type="model", private=False)
     api.upload_file(
-        path_or_fileobj="best_churn_model_v1.joblib",
-        path_in_repo="best_churn_model_v1.joblib",
+        path_or_fileobj=model_path,             # ✅ use correct variable
+        path_in_repo=os.path.basename(model_path),
         repo_id=repo_id,
         repo_type=repo_type,
     )
